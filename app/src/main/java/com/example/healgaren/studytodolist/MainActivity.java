@@ -1,5 +1,6 @@
 package com.example.healgaren.studytodolist;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -27,8 +28,8 @@ public class MainActivity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                Intent intent = new Intent(MainActivity.this, AddMemoActivity.class);
+                startActivityForResult(intent, 1001);
             }
         });
 
@@ -48,4 +49,21 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == 1001) {
+
+            if (resultCode == RESULT_OK) {
+                Snackbar.make(memoRecycler, "add ok!", Snackbar.LENGTH_LONG)
+                        .setAction("Action", null).show();
+            }
+            else if (resultCode == RESULT_CANCELED) {
+                Snackbar.make(memoRecycler, "remove ok!", Snackbar.LENGTH_LONG)
+                        .setAction("Action", null).show();
+            }
+
+        }
+    }
 }
