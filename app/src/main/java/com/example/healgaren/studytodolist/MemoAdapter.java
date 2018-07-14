@@ -14,6 +14,7 @@ import java.util.List;
 public class MemoAdapter extends RecyclerView.Adapter<MemoAdapter.ViewHolder> {
 
     private List<Memo> memoList = new ArrayList<>();
+    private OnItemClickListener onItemClickListener = null;
 
     public void add(Memo memo) {
         memoList.add(memo);
@@ -37,6 +38,14 @@ public class MemoAdapter extends RecyclerView.Adapter<MemoAdapter.ViewHolder> {
         notifyItemRangeRemoved(0, oldSize);
     }
 
+    public Memo get(int position) {
+        return memoList.get(position);
+    }
+
+    public void setOnItemClickListener(OnItemClickListener listener) {
+        onItemClickListener = listener;
+    }
+
 
     @NonNull
     @Override
@@ -55,7 +64,7 @@ public class MemoAdapter extends RecyclerView.Adapter<MemoAdapter.ViewHolder> {
         return memoList.size();
     }
 
-    static class ViewHolder extends RecyclerView.ViewHolder {
+    class ViewHolder extends RecyclerView.ViewHolder {
 
         private TextView titleText;
         private TextView contentText;
@@ -64,12 +73,30 @@ public class MemoAdapter extends RecyclerView.Adapter<MemoAdapter.ViewHolder> {
             super(itemView);
             titleText = itemView.findViewById(R.id.text_title);
             contentText = itemView.findViewById(R.id.text_content);
+            itemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (onItemClickListener != null)
+                        onItemClickListener.onClick(getAdapterPosition());
+                }
+            });
+            itemView.findViewById(R.id.btn_remove).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (onItemClickListener != null)
+                        onItemClickListener.onClickRemoveButton(getAdapterPosition());
+                }
+            });
         }
 
         void bind(Memo memo) {
             titleText.setText(memo.getTitle());
             contentText.setText(memo.getContent());
         }
+    }
 
+    public static interface OnItemClickListener {
+        void onClick(int position);
+        void onClickRemoveButton(int position);
     }
 }

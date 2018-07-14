@@ -21,6 +21,9 @@
         <activity
             android:name=".AddMemoActivity"
             android:label="@string/title_activity_add_memo" />
+        <activity
+            android:name=".DetailMemoActivity"
+            android:label="@string/title_activity_detail_memo" />
     </application>
 
 </manifest>

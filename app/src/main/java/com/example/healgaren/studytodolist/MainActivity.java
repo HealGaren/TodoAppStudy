@@ -1,7 +1,9 @@
 package com.example.healgaren.studytodolist;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
@@ -10,12 +12,16 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
     RecyclerView memoRecycler;
     MemoAdapter memoAdapter;
+
+    SharedPreferences pref;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,20 +39,46 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        pref = PreferenceManager.getDefaultSharedPreferences(this);
+
         memoRecycler = findViewById(R.id.recycler_memo);
         memoAdapter = new MemoAdapter();
         memoRecycler.setAdapter(memoAdapter);
 
         memoRecycler.setLayoutManager(new LinearLayoutManager(this));
 
-        memoAdapter.addAll(Arrays.asList(
-                new Memo("양치하기", "양치는 잘 하자"),
-                new Memo("안드로이드 앱 개발", "스터디 하려면 해야지"),
-                new Memo("롤 하기", "가렌 S랭크를 찍어볼까?"),
-                new Memo("설거지 하기", "밥을 먹었으면 설거지를 해야지")
-        ));
+        memoAdapter.setOnItemClickListener(new MemoAdapter.OnItemClickListener() {
+            @Override
+            public void onClick(int position) {
+                Intent intent = new Intent(MainActivity.this, DetailMemoActivity.class);
+                intent.putExtra("position", position);
+                startActivity(intent);
+            }
 
+            @Override
+            public void onClickRemoveButton(int position) {
+                int currentSize = pref.getInt("memoSize", 0);;
+                pref.edit().putInt("memoSize", currentSize - 1).apply();
+                memoAdapter.remove(position);
+            }
+        });
 
+        reloadMemoList();
+    }
+
+    private void reloadMemoList() {
+        List<Memo> memoList = new ArrayList<>();
+        int size = pref.getInt("memoSize", 0);
+        for (int i=0; i<size; i++) {
+            String title = pref.getString("title" + i, "");
+            String content = pref.getString("content" + i, "");
+            String detailContent = pref.getString("detailContent" + i, "");
+            Memo memo = new Memo(title, content, detailContent);
+            memoList.add(memo);
+        }
+
+        memoAdapter.clear();
+        memoAdapter.addAll(memoList);
     }
 
     @Override
@@ -56,12 +88,10 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == 1001) {
 
             if (resultCode == RESULT_OK) {
-                Snackbar.make(memoRecycler, "add ok!", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                reloadMemoList();
             }
             else if (resultCode == RESULT_CANCELED) {
-                Snackbar.make(memoRecycler, "remove ok!", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+
             }
 
         }
