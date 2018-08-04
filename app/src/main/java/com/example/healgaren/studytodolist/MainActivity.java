@@ -11,17 +11,27 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
+import android.widget.Button;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class MainActivity extends AppCompatActivity {
 
     RecyclerView memoRecycler;
     MemoAdapter memoAdapter;
 
+    Button backupBtn, restoreBtn;
+
     SharedPreferences pref;
+
+    String token;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,6 +50,48 @@ public class MainActivity extends AppCompatActivity {
         });
 
         pref = PreferenceManager.getDefaultSharedPreferences(this);
+
+        backupBtn = findViewById(R.id.btn_backup);
+        restoreBtn = findViewById(R.id.btn_restore);
+
+
+        token = pref.getString("token", null);
+        if (token == null) {
+            NetworkHelper.getInstance().memoService.createToken().enqueue(new Callback<TokenResult>() {
+                @Override
+                public void onResponse(Call<TokenResult> call, Response<TokenResult> response) {
+                    TokenResult result = response.body();
+                    token = result.getToken();
+                }
+
+                @Override
+                public void onFailure(Call<TokenResult> call, Throwable t) {
+
+                }
+            });
+        }
+
+
+        backupBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+//                BackupRequest request = new BackupRequest(token, loadMemoList());
+//                NetworkHelper.getInstance().memoService.backup(request);
+                NetworkHelper.getInstance().memoService.backup(new BackupRequest(token, loadMemoList())).enqueue(new Callback<BaseResult>() {
+                    @Override
+                    public void onResponse(Call<BaseResult> call, Response<BaseResult> response) {
+                        Toast.makeText(MainActivity.this, response.body().getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onFailure(Call<BaseResult> call, Throwable t) {
+
+                    }
+                });
+
+            }
+        });
+
 
         memoRecycler = findViewById(R.id.recycler_memo);
         memoAdapter = new MemoAdapter();
@@ -66,7 +118,7 @@ public class MainActivity extends AppCompatActivity {
         reloadMemoList();
     }
 
-    private void reloadMemoList() {
+    private List<Memo> loadMemoList() {
         List<Memo> memoList = new ArrayList<>();
         int size = pref.getInt("memoSize", 0);
         for (int i=0; i<size; i++) {
@@ -76,9 +128,13 @@ public class MainActivity extends AppCompatActivity {
             Memo memo = new Memo(title, content, detailContent);
             memoList.add(memo);
         }
+        return memoList;
+    }
+
+    private void reloadMemoList() {
 
         memoAdapter.clear();
-        memoAdapter.addAll(memoList);
+        memoAdapter.addAll(loadMemoList());
     }
 
     @Override
